@@ -13,6 +13,9 @@ public class VideoGeneratorService: VideoGeneratorServiceInterface {
         
         let composition = AVMutableComposition()
         let vidAsset = AVURLAsset(url: fileURL)
+        let muteVideo : Bool = ((processing["Mute"]?["mute"] == nil ? false : processing["Mute"]?["mute"]) != nil)
+        let startMs : Int? = processing["TrimVideo"] != nil ? processing["TrimVideo"]!["startMs"] as? Int : nil
+        let endMs : Int? = processing["TrimVideo"] != nil ? processing["TrimVideo"]!["endMs"] as? Int : nil
         
         // get video track
         print("aaasd")
@@ -28,14 +31,17 @@ public class VideoGeneratorService: VideoGeneratorServiceInterface {
         }
         do {
             try compositionvideoTrack.insertTimeRange(vidTimerange, of: videoTrack, at: .zero)
-            if let audioAssetTrack = vidAsset.tracks(withMediaType: .audio).first,
-               let compositionAudioTrack = composition.addMutableTrack(
-                withMediaType: .audio,
-                preferredTrackID: kCMPersistentTrackID_Invalid) {
-                try compositionAudioTrack.insertTimeRange(
-                    vidTimerange,
-                    of: audioAssetTrack,
-                    at: .zero)
+            //Don't insert audio track if muteVideo is true
+            if !muteVideo{
+                if let audioAssetTrack =  vidAsset.tracks(withMediaType: .audio).first,
+                   let compositionAudioTrack = composition.addMutableTrack(
+                    withMediaType: .audio,
+                    preferredTrackID: kCMPersistentTrackID_Invalid) {
+                    try compositionAudioTrack.insertTimeRange(
+                        vidTimerange,
+                        of: audioAssetTrack,
+                        at: .zero)
+                }
             }
         } catch {
             print(error)
@@ -46,7 +52,7 @@ public class VideoGeneratorService: VideoGeneratorServiceInterface {
         }
         
         compositionvideoTrack.preferredTransform = videoTrack.preferredTransform
-        let size = videoTrack.naturalSize
+        //let size = videoTrack.naturalSize
         
         let layercomposition = AVVideoComposition(asset: composition) { (filteringRequest) in
             var source = filteringRequest.sourceImage.clampedToExtent()
@@ -140,6 +146,16 @@ public class VideoGeneratorService: VideoGeneratorServiceInterface {
         assetExport.videoComposition = layercomposition
         
         assetExport.outputURL = movieDestinationUrl
+        
+        if startMs != nil && endMs != nil {
+            let startTime = CMTime(seconds: Double(startMs!) / 1000, preferredTimescale: 1000)
+            let endTime = CMTime(seconds: Double(endMs!) / 1000, preferredTimescale: 1000)
+            let timeRange = CMTimeRange(start: startTime, end: endTime)
+            
+            assetExport.timeRange = timeRange
+        }
+            
+        
         assetExport.exportAsynchronously{
             switch assetExport.status{
             case .completed:
