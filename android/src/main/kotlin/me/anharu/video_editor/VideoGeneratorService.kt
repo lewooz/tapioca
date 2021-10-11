@@ -66,7 +66,7 @@ class VideoGeneratorService(
                     }
 
                     override fun onCurrentWrittenVideoTime(timeUs: Long) {
-                        TODO("Not yet implemented")
+
                     }
 
                     override fun onCompleted() {
