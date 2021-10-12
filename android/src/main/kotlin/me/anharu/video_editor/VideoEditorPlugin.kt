@@ -88,10 +88,10 @@ class VideoEditorPlugin : FlutterPlugin, MethodCallHandler, PluginRegistry.Reque
         val author = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_AUTHOR) ?: ""
         val widthStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
         val heightStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
+        val aspectRatio = widthStr?.toDouble()?.div(heightStr?.toDouble()!!)
         val duration = java.lang.Long.parseLong(durationStr!!)
         val width = java.lang.Long.parseLong(widthStr!!)
         val height = java.lang.Long.parseLong(heightStr!!)
-        val aspectRatio = width.div(height)
         val filesize = file.length()
 
         retriever.release()
