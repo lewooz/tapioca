@@ -91,7 +91,7 @@ class VideoEditorPlugin : FlutterPlugin, MethodCallHandler, PluginRegistry.Reque
         val duration = java.lang.Long.parseLong(durationStr!!)
         val width = java.lang.Long.parseLong(widthStr!!)
         val height = java.lang.Long.parseLong(heightStr!!)
-        val aspectRatio = width / height
+        val aspectRatio = width.div(height)
         val filesize = file.length()
 
         retriever.release()
