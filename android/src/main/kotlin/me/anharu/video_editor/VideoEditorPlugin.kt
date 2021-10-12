@@ -1,42 +1,44 @@
 package me.anharu.video_editor
 
 import android.Manifest
-import android.app.Application
 import android.app.Activity
-import android.content.pm.PackageManager
-import android.os.Environment
+import android.content.Context
 import androidx.annotation.NonNull
 import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
+import android.media.MediaMetadataRetriever
+import android.net.Uri
 import com.daasuu.mp4compose.composer.Mp4Composer
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
+import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-import io.flutter.plugin.common.PluginRegistry.Registrar
-import me.anharu.video_editor.VideoGeneratorService
-import java.io.File
-import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
-import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.PluginRegistry
+import org.json.JSONObject
+import java.io.File
 
 
 /** VideoEditorPlugin */
 class VideoEditorPlugin : FlutterPlugin, MethodCallHandler, PluginRegistry.RequestPermissionsResultListener, ActivityAware {
+    private var _context: Context? = null
     var activity: Activity? = null
     private var methodChannel: MethodChannel? = null
     private val myPermissionCode = 34264
 
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
-        onAttachedToEngine(flutterPluginBinding.binaryMessenger)
+        onAttachedToEngine(flutterPluginBinding.binaryMessenger, flutterPluginBinding.applicationContext)
     }
 
-    private fun onAttachedToEngine(messenger: BinaryMessenger) {
+    private fun onAttachedToEngine(messenger: BinaryMessenger, context: Context) {
         methodChannel = MethodChannel(messenger, "video_editor")
         methodChannel?.setMethodCallHandler(this)
+        _context = context
+
     }
+
 
 
     override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
@@ -64,9 +66,48 @@ class VideoEditorPlugin : FlutterPlugin, MethodCallHandler, PluginRegistry.Reque
             //Mp4 composer yaratırken source ve destination burada veriyoruz.
             val generator = VideoGeneratorService(Mp4Composer(srcFilePath, destFilePath))
             generator.writeVideofile(processing, result, getActivity)
-        } else {
+        } else if (call.method == "getMediaInfo"){
+            val srcFilePath: String = call.argument("srcFilePath") ?: run {
+                result.error("src_file_path_not_found", "the src file path is not found.", null)
+                return
+            }
+            result.success(getMediaInfoJson(srcFilePath))
+        }else{
             result.notImplemented()
         }
+    }
+
+    private fun getMediaInfoJson(path: String): JSONObject {
+        val file = File(path)
+        val retriever = MediaMetadataRetriever()
+
+        retriever.setDataSource(_context, Uri.fromFile(file))
+
+        val durationStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+        val title = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_TITLE) ?: ""
+        val author = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_AUTHOR) ?: ""
+        val widthStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_WIDTH)
+        val heightStr = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_HEIGHT)
+        val aspectRatio = widthStr?.toDouble()?.div(heightStr?.toDouble()!!)
+        val duration = java.lang.Long.parseLong(durationStr!!)
+        val width = java.lang.Long.parseLong(widthStr!!)
+        val height = java.lang.Long.parseLong(heightStr!!)
+        val filesize = file.length()
+
+        retriever.release()
+
+        val json = JSONObject()
+
+        json.put("path", path)
+        json.put("title", title)
+        json.put("author", author)
+        json.put("width", width)
+        json.put("height", height)
+        json.put("duration", duration)
+        json.put("filesize", filesize)
+        json.put("aspectratio",aspectRatio)
+
+        return json
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
@@ -109,5 +150,6 @@ class VideoEditorPlugin : FlutterPlugin, MethodCallHandler, PluginRegistry.Reque
     }
 
     override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
+        _context = null
     }
 }

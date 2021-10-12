@@ -1,3 +1,5 @@
+import 'package:tapioca/src/model/media_info.dart';
+
 import 'tapioca_ball.dart';
 import 'content.dart';
 import 'video_editor.dart';
@@ -11,11 +13,15 @@ class Cup {
   final List<TapiocaBall> tapiocaBalls;
 
   /// Creates a Cup object.
-  Cup(this.content, this.tapiocaBalls);
+  Cup(this.content, {this.tapiocaBalls = const []});
 
   /// Edit the video based on the [tapiocaBalls](list of processing)
   Future suckUp(String destFilePath) {
     final Map<String, Map<String, dynamic>> processing = Map.fromIterable(tapiocaBalls, key: (v) => v.toTypeName(), value: (v) => v.toMap());
     return VideoEditor.writeVideofile(content.name, destFilePath, processing);
+  }
+
+  Future<MediaInfo> getMediaInfo() async{
+      return await VideoEditor.getMediaInfo(content.name);
   }
 }

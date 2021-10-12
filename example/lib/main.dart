@@ -69,7 +69,7 @@ class _MyAppState extends State<MyApp> {
                 TapiocaBall.textOverlay(
                     "text", 100, 10, 100, Color(0xffffc0cb)),
               ];
-                final cup = Cup(Content(_video.path), tapiocaBalls);
+                final cup = Cup(Content(_video.path),tapiocaBalls: tapiocaBalls);
                 cup.suckUp(path).then((_) async {
                   print("finished");
                   print(path);
