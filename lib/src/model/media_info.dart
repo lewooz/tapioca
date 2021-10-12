@@ -35,7 +35,7 @@ class MediaInfo {
     author = json['author'];
     width = json['width'];
     height = json['height'];
-    aspectRatio = json['aspectRatio'];
+    aspectRatio = json['aspectratio'];
     filesize = json['filesize'];
     duration = double.tryParse('${json['duration']}');
     isCancel = json['isCancel'];
@@ -50,7 +50,7 @@ class MediaInfo {
     data['width'] = this.width;
     data['height'] = this.height;
     data['height'] = this.height;
-    data['aspectRatio'] = this.aspectRatio;
+    data['aspectratio'] = this.aspectRatio;
     data['duration'] = this.duration;
     if (this.isCancel != null) {
       data['isCancel'] = this.isCancel;
