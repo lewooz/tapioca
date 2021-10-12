@@ -71,7 +71,7 @@ class VideoEditorPlugin : FlutterPlugin, MethodCallHandler, PluginRegistry.Reque
                 result.error("src_file_path_not_found", "the src file path is not found.", null)
                 return
             }
-            result.success(getMediaInfoJson(srcFilePath))
+            result.success(getMediaInfoJson(srcFilePath).toString())
         }else{
             result.notImplemented()
         }
