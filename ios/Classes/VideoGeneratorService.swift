@@ -4,11 +4,17 @@ import Photos
 import Flutter
 
 public protocol VideoGeneratorServiceInterface {
-    func writeVideofile(srcPath:String, destPath:String, processing: [String: [String:Any]], result: @escaping FlutterResult)
+    func writeVideofile(srcPath:String, destPath:String, processing: [String: [String:Any]],eventSink: FlutterEventSink?, result: @escaping FlutterResult )
 }
 
 public class VideoGeneratorService: VideoGeneratorServiceInterface {
-    public func writeVideofile(srcPath:String, destPath:String, processing: [String: [String:Any]], result: @escaping FlutterResult) {
+    var eventSink : FlutterEventSink?
+    
+    init(eventSink : FlutterEventSink?) {
+            self.eventSink   = eventSink
+        }
+    
+    public func writeVideofile(srcPath:String, destPath:String, processing: [String: [String:Any]], eventSink:FlutterEventSink?, result: @escaping FlutterResult) {
         let fileURL = URL(fileURLWithPath: srcPath)
         
         let composition = AVMutableComposition()
@@ -18,9 +24,9 @@ public class VideoGeneratorService: VideoGeneratorServiceInterface {
         let endMs : Int? = processing["TrimVideo"] != nil ? processing["TrimVideo"]!["endMs"] as? Int : nil
         
         // get video track
-        print("aaasd")
+        print("Start video edit")
         let videoTrack: AVAssetTrack = vidAsset.tracks(withMediaType: .video)[0]
-        print("tabunn")
+
         let vidTimerange = CMTimeRangeMake(start: CMTime.zero, duration: vidAsset.duration)
         
         guard let compositionvideoTrack:AVMutableCompositionTrack = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid) else {
@@ -144,7 +150,7 @@ public class VideoGeneratorService: VideoGeneratorServiceInterface {
         }
         assetExport.outputFileType = .mp4
         assetExport.videoComposition = layercomposition
-        
+        assetExport.shouldOptimizeForNetworkUse = true
         assetExport.outputURL = movieDestinationUrl
         
         if startMs != nil && endMs != nil {
@@ -154,9 +160,12 @@ public class VideoGeneratorService: VideoGeneratorServiceInterface {
             
             assetExport.timeRange = timeRange
         }
-            
         
-        assetExport.exportAsynchronously{
+        let timer = Timer.scheduledTimer(timeInterval: 0.1, target: self, selector: #selector(self.updateProgress),
+                                                 userInfo: assetExport, repeats: true)
+        
+        assetExport.exportAsynchronously(completionHandler: {
+            timer.invalidate()
             switch assetExport.status{
             case .completed:
                 print("Movie complete")
@@ -169,8 +178,17 @@ public class VideoGeneratorService: VideoGeneratorServiceInterface {
                 print("cancelled \(String(describing: assetExport.error))")
                 break
             }
-        }
+            
+        })
     }
+    
+    @objc private func updateProgress(timer:Timer) {
+            let asset = timer.userInfo as! AVAssetExportSession
+        if(eventSink != nil) {
+            eventSink!(floor(asset.progress * 100))
+            
+        }
+        }
 }
 
 extension UIColor {

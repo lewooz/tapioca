@@ -18,6 +18,7 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   final navigatorKey = GlobalKey<NavigatorState>();
   late XFile _video;
+   Cup? cup;
   bool isLoading = false;
 
   @override
@@ -31,9 +32,19 @@ class _MyAppState extends State<MyApp> {
       final ImagePicker _picker = ImagePicker();
       XFile? video = await _picker.pickVideo(source: ImageSource.gallery);
       if (video != null) {
+        final imageBitmap =
+        (await rootBundle.load("assets/tapioca_drink.png"))
+            .buffer
+            .asUint8List();
       setState(() {
       _video = video;
       isLoading = true;
+      cup = Cup(Content(video.path), tapiocaBalls: [
+        TapiocaBall.filter(Filters.pink),
+        TapiocaBall.imageOverlay(imageBitmap, 300, 300),
+        TapiocaBall.textOverlay(
+            "text", 100, 10, 100, Color(0xffffc0cb))
+      ]);
       });
       }
     } catch (error) {
@@ -50,49 +61,60 @@ class _MyAppState extends State<MyApp> {
           title: const Text('Plugin example app'),
         ),
         body: Center(
-            child: isLoading ? CircularProgressIndicator() : ElevatedButton(
-          child: Text("Pick a video and Edit it"),
-          onPressed: () async {
-            print("clicked!");
-            await _pickVideo();
-            var tempDir = await getTemporaryDirectory();
-            final path = '${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}result.mp4';
-            print(tempDir);
-            final imageBitmap =
-                (await rootBundle.load("assets/tapioca_drink.png"))
-                    .buffer
-                    .asUint8List();
-            try {
-              final tapiocaBalls = [
-                TapiocaBall.filter(Filters.pink),
-                TapiocaBall.imageOverlay(imageBitmap, 300, 300),
-                TapiocaBall.textOverlay(
-                    "text", 100, 10, 100, Color(0xffffc0cb)),
-              ];
-                final cup = Cup(Content(_video.path),tapiocaBalls: tapiocaBalls);
-                cup.suckUp(path).then((_) async {
-                  print("finished");
-                  print(path);
-                  GallerySaver.saveVideo(path).then((bool? success) {
-                    print(success.toString());
-                  });
-                  final currentState = navigatorKey.currentState;
-                  if (currentState != null) {
-                    currentState.push(
-                      MaterialPageRoute(builder: (context) =>
-                          VideoScreen(path)),
-                    );
-                  }
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ElevatedButton(
+                  child: Text("Pick a video and Edit it"),
+                  onPressed: () async {
+                    print("clicked!");
+                    await _pickVideo();
+                  },
+                ),
+                ElevatedButton(
+                  child: Text("GO!!"),
+                  onPressed: () async {
+                    var tempDir = await getTemporaryDirectory();
+                    final path = '${tempDir.path}/${DateTime.now().millisecondsSinceEpoch}result.mp4';
+                    print(tempDir);
 
-                  setState(() {
-                    isLoading = false;
-                  });
-                });
-            } on PlatformException {
-              print("error!!!!");
-            }
-          },
-        )),
+                    try {
+                      cup!.suckUp(path).then((_) async {
+                        print("finished");
+                        print(path);
+                        GallerySaver.saveVideo(path).then((bool? success) {
+                          print(success.toString());
+                        });
+                        final currentState = navigatorKey.currentState;
+                      /*  if (currentState != null) {
+                          currentState.push(
+                            MaterialPageRoute(builder: (context) =>
+                                VideoScreen(path)),
+                          );
+                        }*/
+                        setState(() {
+                          isLoading = false;
+                        });
+                      });
+                    } on PlatformException {
+                      print("error!!!!");
+                    }
+                  },
+                ),
+                if(cup != null)
+                StreamBuilder(
+                  stream: cup!.listenEditingProgress(),
+                  initialData: 0.0,
+                  builder: (BuildContext context, AsyncSnapshot<double> snapshot) {
+                    if(snapshot.data!=null){
+                      return Text(snapshot.data.toString());
+                    }else{
+                      return Text("NULL");
+                    }
+                  },
+                )
+              ],
+            )),
       ),
     );
   }

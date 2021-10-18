@@ -10,7 +10,7 @@ class Cup {
   final Content content;
 
   /// Returns the [List<TapiocaBall>] instance.
-  final List<TapiocaBall> tapiocaBalls;
+   List<TapiocaBall> tapiocaBalls;
 
   /// Creates a Cup object.
   Cup(this.content, {this.tapiocaBalls = const []});
@@ -23,5 +23,9 @@ class Cup {
 
   Future<MediaInfo> getMediaInfo() async{
       return await VideoEditor.getMediaInfo(content.name);
+  }
+
+  Stream<double> listenEditingProgress(){
+    return VideoEditor.onProgressUpdated;
   }
 }

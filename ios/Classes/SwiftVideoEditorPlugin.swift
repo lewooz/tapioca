@@ -2,14 +2,18 @@ import Flutter
 import UIKit
 import AVFoundation
 
-public class SwiftVideoEditorPlugin: NSObject, FlutterPlugin {
+public class SwiftVideoEditorPlugin: NSObject, FlutterPlugin, FlutterStreamHandler {
     
     private let avController = AvController()
+    private var eventSink : FlutterEventSink? = nil
     
     public static func register(with registrar: FlutterPluginRegistrar) {
         let channel = FlutterMethodChannel(name: "video_editor", binaryMessenger: registrar.messenger())
         let instance = SwiftVideoEditorPlugin()
         registrar.addMethodCallDelegate(instance, channel: channel)
+        
+        let eventChannel = FlutterEventChannel(name: "progressStream", binaryMessenger: registrar.messenger())
+        eventChannel.setStreamHandler(instance.self)
     }
     
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
@@ -23,7 +27,7 @@ public class SwiftVideoEditorPlugin: NSObject, FlutterPlugin {
         
         switch call.method {
         case "writeVideofile":
-            let video = VideoGeneratorService()
+            let video = VideoGeneratorService(eventSink: eventSink)
             
             guard let srcName = args["srcFilePath"] as? String else {
                 result(FlutterError(code: "src_file_path_not_found",
@@ -43,7 +47,7 @@ public class SwiftVideoEditorPlugin: NSObject, FlutterPlugin {
                                     details: nil))
                 return
             }
-            video.writeVideofile(srcPath: srcName, destPath: destName, processing: processing,result: result)
+            video.writeVideofile(srcPath: srcName, destPath: destName, processing: processing,eventSink: eventSink, result: result)
         case "getMediaInfo":
             guard let srcName = args["srcFilePath"] as? String else {
                 result(FlutterError(code: "src_file_path_not_found",
@@ -96,5 +100,15 @@ public class SwiftVideoEditorPlugin: NSObject, FlutterPlugin {
         
         return dictionary
         
+    }
+    
+    public func onListen(withArguments arguments: Any?, eventSink events: @escaping FlutterEventSink) -> FlutterError? {
+        self.eventSink = events
+        return nil
+    }
+    
+    public func onCancel(withArguments arguments: Any?) -> FlutterError? {
+        eventSink = nil
+        return nil
     }
 }

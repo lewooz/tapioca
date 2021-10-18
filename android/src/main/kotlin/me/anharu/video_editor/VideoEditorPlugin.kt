@@ -11,22 +11,21 @@ import com.daasuu.mp4compose.composer.Mp4Composer
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
-import io.flutter.plugin.common.BinaryMessenger
-import io.flutter.plugin.common.MethodCall
-import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.*
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
-import io.flutter.plugin.common.PluginRegistry
 import org.json.JSONObject
 import java.io.File
 
 
 /** VideoEditorPlugin */
-class VideoEditorPlugin : FlutterPlugin, MethodCallHandler, PluginRegistry.RequestPermissionsResultListener, ActivityAware {
+class VideoEditorPlugin : FlutterPlugin, MethodCallHandler, EventChannel.StreamHandler, PluginRegistry.RequestPermissionsResultListener, ActivityAware {
     private var _context: Context? = null
     var activity: Activity? = null
     private var methodChannel: MethodChannel? = null
     private val myPermissionCode = 34264
+    private lateinit var eventChannel: EventChannel
+    private var eventSink: EventChannel.EventSink? = null
 
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         onAttachedToEngine(flutterPluginBinding.binaryMessenger, flutterPluginBinding.applicationContext)
@@ -34,8 +33,10 @@ class VideoEditorPlugin : FlutterPlugin, MethodCallHandler, PluginRegistry.Reque
 
     private fun onAttachedToEngine(messenger: BinaryMessenger, context: Context) {
         methodChannel = MethodChannel(messenger, "video_editor")
+        eventChannel = EventChannel(messenger,"progressStream")
         methodChannel?.setMethodCallHandler(this)
         _context = context
+        eventChannel.setStreamHandler(this)
 
     }
 
@@ -65,7 +66,7 @@ class VideoEditorPlugin : FlutterPlugin, MethodCallHandler, PluginRegistry.Reque
 
             //Mp4 composer yaratırken source ve destination burada veriyoruz.
             val generator = VideoGeneratorService(Mp4Composer(srcFilePath, destFilePath))
-            generator.writeVideofile(processing, result, getActivity)
+            generator.writeVideofile(processing, result, getActivity, eventSink)
         } else if (call.method == "getMediaInfo"){
             val srcFilePath: String = call.argument("srcFilePath") ?: run {
                 result.error("src_file_path_not_found", "the src file path is not found.", null)
@@ -151,5 +152,13 @@ class VideoEditorPlugin : FlutterPlugin, MethodCallHandler, PluginRegistry.Reque
 
     override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
         _context = null
+    }
+
+    override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+        eventSink = events
+    }
+
+    override fun onCancel(arguments: Any?) {
+        eventSink = null
     }
 }

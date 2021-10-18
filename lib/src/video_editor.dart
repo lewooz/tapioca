@@ -7,6 +7,19 @@ class VideoEditor {
   static const MethodChannel _channel =
   const MethodChannel('video_editor');
 
+  static const EventChannel _progressStream =
+  EventChannel('progressStream');
+
+  static Stream<double>? _onProgressUpdated;
+
+  static Stream<double> get onProgressUpdated {
+    _onProgressUpdated ??= _progressStream
+        .receiveBroadcastStream()
+        .distinct()
+        .map<double>((dynamic result) => result != null ? result : 0);
+    return _onProgressUpdated!;
+  }
+
   static Future<String> get platformVersion async {
     final String version = await _channel.invokeMethod('getPlatformVersion');
     return version;

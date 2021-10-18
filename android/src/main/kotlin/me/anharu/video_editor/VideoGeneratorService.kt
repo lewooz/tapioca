@@ -8,18 +8,21 @@ import me.anharu.video_editor.ImageOverlay
 import io.flutter.plugin.common.MethodChannel.Result
 import android.graphics.Paint.Align
 import android.graphics.Paint.ANTI_ALIAS_FLAG
+import android.os.Handler
+import android.os.Looper
+import io.flutter.plugin.common.EventChannel
 import me.anharu.video_editor.filter.GlColorBlendFilter
 import me.anharu.video_editor.filter.GlTextOverlayFilter
 
 
 interface VideoGeneratorServiceInterface {
-    fun writeVideofile(processing: HashMap<String,HashMap<String,Any>>, result: Result, activity: Activity)
+    fun writeVideofile(processing: HashMap<String,HashMap<String,Any>>, result: Result, activity: Activity, eventSink: EventChannel.EventSink?)
 }
 
 class VideoGeneratorService(
         private var composer: Mp4Composer
 ) : VideoGeneratorServiceInterface {
-    override fun writeVideofile(processing: HashMap<String,HashMap<String,Any>>, result: Result, activity: Activity ) {
+    override fun writeVideofile(processing: HashMap<String,HashMap<String,Any>>, result: Result, activity: Activity, eventSink: EventChannel.EventSink? ) {
         val filters: MutableList<GlFilter> = mutableListOf()
         var muteVideo = false
         var startMs : Int? = null
@@ -63,6 +66,9 @@ class VideoGeneratorService(
                 .listener(object : Mp4Composer.Listener {
                     override fun onProgress(progress: Double) {
                         println("onProgress = " + progress)
+                        Handler(Looper.getMainLooper()).post {
+                            eventSink?.success(progress * 100)
+                        }
                     }
 
                     override fun onCurrentWrittenVideoTime(timeUs: Long) {
