@@ -10,10 +10,10 @@ class Cup {
   final Content content;
 
   /// Returns the [List<TapiocaBall>] instance.
-   List<TapiocaBall> tapiocaBalls;
+  final List<TapiocaBall> tapiocaBalls;
 
   /// Creates a Cup object.
-  Cup(this.content, {this.tapiocaBalls = const []});
+  Cup(this.content, {required this.tapiocaBalls});
 
   /// Edit the video based on the [tapiocaBalls](list of processing)
   Future suckUp(String destFilePath) {
