@@ -19,7 +19,7 @@ public class VideoGeneratorService: VideoGeneratorServiceInterface {
         
         let composition = AVMutableComposition()
         let vidAsset = AVURLAsset(url: fileURL)
-        let muteVideo : Bool = ((processing["Mute"]?["mute"]) != nil)
+        let muteVideo : Bool = processing["TrimVideo"]!["startMs"] as! Bool
         let startMs : Int? = processing["TrimVideo"] != nil ? processing["TrimVideo"]!["startMs"] as? Int : nil
         let endMs : Int? = processing["TrimVideo"] != nil ? processing["TrimVideo"]!["endMs"] as? Int : nil
         
