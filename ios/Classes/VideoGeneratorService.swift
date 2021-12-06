@@ -25,6 +25,7 @@ public class VideoGeneratorService: VideoGeneratorServiceInterface {
         
         // get video track
         print("Start video edit")
+        print(muteVideo)
         let videoTrack: AVAssetTrack = vidAsset.tracks(withMediaType: .video)[0]
 
         let vidTimerange = CMTimeRangeMake(start: CMTime.zero, duration: vidAsset.duration)
@@ -38,7 +39,7 @@ public class VideoGeneratorService: VideoGeneratorServiceInterface {
         do {
             try compositionvideoTrack.insertTimeRange(vidTimerange, of: videoTrack, at: .zero)
             //Don't insert audio track if muteVideo is true
-            if !muteVideo{
+            if muteVideo == false {
                 if let audioAssetTrack =  vidAsset.tracks(withMediaType: .audio).first,
                    let compositionAudioTrack = composition.addMutableTrack(
                     withMediaType: .audio,
