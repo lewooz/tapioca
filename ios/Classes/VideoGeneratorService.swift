@@ -49,6 +49,12 @@ public class VideoGeneratorService: VideoGeneratorServiceInterface {
             try compositionvideoTrack.insertTimeRange(vidTimerange, of: videoTrack, at: .zero)
             //Don't insert audio track if muteVideo is true
             if muteVideo == false {
+                print("ADD AUDIO GİRDİİİİ")
+                print("ADD AUDIO GİRDİİİİ")
+                print("ADD AUDIO GİRDİİİİ")
+                print("ADD AUDIO GİRDİİİİ")
+                print("ADD AUDIO GİRDİİİİ")
+                print("ADD AUDIO GİRDİİİİ")
                 if let audioAssetTrack =  vidAsset.tracks(withMediaType: .audio).first,
                    let compositionAudioTrack = composition.addMutableTrack(
                     withMediaType: .audio,
