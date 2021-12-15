@@ -25,7 +25,16 @@ public class VideoGeneratorService: VideoGeneratorServiceInterface {
         
         // get video track
         print("Start video edit")
+        print(processing["Mute"]!["mute"] as! Bool)
+        print(processing["Mute"]!["mute"] as! Bool)
+        print(processing["Mute"]!["mute"] as! Bool)
+        print(processing["Mute"]!["mute"] as! Bool)
+        print(processing["Mute"]!["mute"] as! Bool)
         print(muteVideo)
+        print(muteVideo)
+        print(muteVideo)
+        print(muteVideo)
+
         let videoTrack: AVAssetTrack = vidAsset.tracks(withMediaType: .video)[0]
 
         let vidTimerange = CMTimeRangeMake(start: CMTime.zero, duration: vidAsset.duration)
