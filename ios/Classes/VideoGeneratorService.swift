@@ -14,10 +14,22 @@ public class VideoGeneratorService: VideoGeneratorServiceInterface {
             self.eventSink   = eventSink
         }
     
+    private func getComposition(_ isIncludeAudio: Bool,_ timeRange: CMTimeRange, _ sourceVideoTrack: AVAssetTrack)->AVAsset {
+            let composition = AVMutableComposition()
+            if !isIncludeAudio {
+                let compressionVideoTrack = composition.addMutableTrack(withMediaType: AVMediaType.video, preferredTrackID: kCMPersistentTrackID_Invalid)
+                compressionVideoTrack!.preferredTransform = sourceVideoTrack.preferredTransform
+                try? compressionVideoTrack!.insertTimeRange(timeRange, of: sourceVideoTrack, at: CMTime.zero)
+            } else {
+                return sourceVideoTrack.asset!
+            }
+            
+            return composition
+        }
+    
     public func writeVideofile(srcPath:String, destPath:String, processing: [String: [String:Any]], eventSink:FlutterEventSink?, result: @escaping FlutterResult) {
         let fileURL = URL(fileURLWithPath: srcPath)
         
-        let composition = AVMutableComposition()
         let vidAsset = AVURLAsset(url: fileURL)
         let muteVideo : Bool = processing["Mute"]!["mute"] as! Bool
         let startMs : Int? = processing["TrimVideo"] != nil ? processing["TrimVideo"]!["startMs"] as? Int : nil
@@ -34,46 +46,49 @@ public class VideoGeneratorService: VideoGeneratorServiceInterface {
         print(muteVideo)
         print(muteVideo)
         print(muteVideo)
+        
 
         let videoTrack: AVAssetTrack = vidAsset.tracks(withMediaType: .video)[0]
 
         let vidTimerange = CMTimeRangeMake(start: CMTime.zero, duration: vidAsset.duration)
         
-        guard let compositionvideoTrack:AVMutableCompositionTrack = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid) else {
-            result(FlutterError(code: "video_processing_failed",
-                                message: "composition.addMutableTrack is failed.",
-                                details: nil))
-            return
-        }
-        do {
-            try compositionvideoTrack.insertTimeRange(vidTimerange, of: videoTrack, at: .zero)
-            //Don't insert audio track if muteVideo is true
-            if muteVideo == false {
-                print("ADD AUDIO GİRDİİİİ")
-                print("ADD AUDIO GİRDİİİİ")
-                print("ADD AUDIO GİRDİİİİ")
-                print("ADD AUDIO GİRDİİİİ")
-                print("ADD AUDIO GİRDİİİİ")
-                print("ADD AUDIO GİRDİİİİ")
-                if let audioAssetTrack =  vidAsset.tracks(withMediaType: .audio).first,
-                   let compositionAudioTrack = composition.addMutableTrack(
-                    withMediaType: .audio,
-                    preferredTrackID: kCMPersistentTrackID_Invalid) {
-                    try compositionAudioTrack.insertTimeRange(
-                        vidTimerange,
-                        of: audioAssetTrack,
-                        at: .zero)
-                }
-            }
-        } catch {
-            print(error)
-            result(FlutterError(code: "video_processing_failed",
-                                message: "compositionvideoTrack is failed.",
-                                details: nil))
-            return
-        }
+        let composition = getComposition(!muteVideo, vidTimerange, videoTrack)
         
-        compositionvideoTrack.preferredTransform = videoTrack.preferredTransform
+//        guard let compositionvideoTrack:AVMutableCompositionTrack = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid) else {
+//            result(FlutterError(code: "video_processing_failed",
+//                                message: "composition.addMutableTrack is failed.",
+//                                details: nil))
+//            return
+//        }
+//        do {
+//            try compositionvideoTrack.insertTimeRange(vidTimerange, of: videoTrack, at: .zero)
+//            //Don't insert audio track if muteVideo is true
+//            if muteVideo == false {
+//                print("ADD AUDIO GİRDİİİİ")
+//                print("ADD AUDIO GİRDİİİİ")
+//                print("ADD AUDIO GİRDİİİİ")
+//                print("ADD AUDIO GİRDİİİİ")
+//                print("ADD AUDIO GİRDİİİİ")
+//                print("ADD AUDIO GİRDİİİİ")
+//                if let audioAssetTrack =  vidAsset.tracks(withMediaType: .audio).first,
+//                   let compositionAudioTrack = composition.addMutableTrack(
+//                    withMediaType: .audio,
+//                    preferredTrackID: kCMPersistentTrackID_Invalid) {
+//                    try compositionAudioTrack.insertTimeRange(
+//                        vidTimerange,
+//                        of: audioAssetTrack,
+//                        at: .zero)
+//                }
+//            }
+//        } catch {
+//            print(error)
+//            result(FlutterError(code: "video_processing_failed",
+//                                message: "compositionvideoTrack is failed.",
+//                                details: nil))
+//            return
+//        }
+        
+        //compositionvideoTrack.preferredTransform = videoTrack.preferredTransform
         //let size = videoTrack.naturalSize
         
         let layercomposition = AVVideoComposition(asset: composition) { (filteringRequest) in
